@@ -42,6 +42,7 @@
               //如果成功
               if (status === 'SUCCEED'){
                 localStorage.setItem("token",token)
+                console.log("token: "+localStorage.getItem("token"))
                 that.$message({
                   message: '登录成功',
                   type: 'success'
