@@ -37,15 +37,16 @@
             if (res.status === 200){
               //取出login的response
               const {
-                status,errorMessage
+                status,token,errorMessage
               }=res.data
               //如果成功
               if (status === 'SUCCEED'){
+                localStorage.setItem("token",token)
                 that.$message({
                   message: '登录成功',
                   type: 'success'
                 })
-                //this.$router.push({name: 'home'})
+                this.$router.push({name: 'home'})
               }else {
                 //如果失败
                 that.$message.error(errorMessage)
