@@ -10,7 +10,7 @@
       <el-input v-model="formData.phone" placeholder="请输入手机号"></el-input>
       </el-form-item>
     <el-form-item label="密码">
-      <el-input v-model="formData.password" placeholder="请输入密码"></el-input>
+      <el-input v-model="formData.password" placeholder="请输入密码" type="password"></el-input>
     </el-form-item>
       <el-button class="login-btn" type="primary" v-on:click="login">登录</el-button>
   </el-form>
