@@ -19,7 +19,7 @@
       <el-aside class="aside" width="200px">
 
         <el-menu
-          unique-opened="true">
+          :unique-opened="true">
 
           <el-submenu index="1">
             <template slot="title">
@@ -98,9 +98,18 @@
 </template>
 
 <script>
+  //newVue之前触发
     export default {
-        name: "home"
+      beforeCreate() {
+        //获取token
+        //判断token，有则放行，无则返回登录界面
+        const token = localStorage.getItem("token")
+        if (!token){
+          this.$router.push({name: "login"})
+        }
+      }
     }
+
 </script>
 
 
