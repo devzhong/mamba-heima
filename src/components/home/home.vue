@@ -6,7 +6,7 @@
           <img src="../../assets/heima_logo.png">
         </div></el-col>
         <el-col :span="18">
-          <h2 class="middle">电商后台管理系统</h2>
+          <h2 class="middle">测试管理</h2>
 
 
         </el-col>
@@ -86,6 +86,25 @@
             <el-menu-item index="5-1">
               <i class="el-icon-location"></i>
               <span>数据报表</span>
+            </el-menu-item>
+          </el-submenu>
+
+          <el-submenu index="6">
+            <template slot="title">
+              <i class="el-icon-location"></i>
+              <span>测试工具</span>
+            </template>
+            <el-menu-item index="6-1">
+              <i class="el-icon-location"></i>
+              <span>水滴</span>
+            </el-menu-item>
+            <el-menu-item index="6-2">
+              <i class="el-icon-location"></i>
+              <span>关注</span>
+            </el-menu-item>
+            <el-menu-item index="6-3">
+              <i class="el-icon-location"></i>
+              <span>活动</span>
             </el-menu-item>
           </el-submenu>
 
