@@ -82,10 +82,46 @@
           <el-button @click="diagEditShow(scope.row)" size=mini plain type="primary" icon="el-icon-edit" circle></el-button>
           <el-button @click="dialogshow(scope.row.id)" size=mini plain type="danger" icon="el-icon-delete" circle>
           </el-button>
+          <el-button @click="showSetUserRoleDia(scope.row)" size=mini plain type="success" icon="el-icon-check" circle>
+          </el-button>
         </template>
 
       </el-table-column>
     </el-table>
+
+
+    <el-dialog title="分配角色" :visible.sync="dialogEditUserRoleFormVisible">
+      <el-form :model="editHorseForm">
+        <el-form-item label="用户名" label-width="120px">
+          {{editHorseForm.name}}
+        </el-form-item>
+        <el-form-item label="角色" label-width="120px">
+
+          <el-select
+            v-model="currentRoleId"
+            placeholder="请选择角色"
+            @change="selectRole(currentRoleId)"
+          >
+            <el-option label="请选择" :value="-1"></el-option>
+            <el-option
+              :label="item.name"
+              :value="item.id"
+              v-for="(item, i) in roleList"
+              :key="i"
+            >
+            </el-option>
+          </el-select>
+
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogEditUserRoleFormVisible = false">取 消</el-button>
+        <el-button type="primary" @click="editUserRole">确 定</el-button>
+      </div>
+    </el-dialog>
+
+
+
 
     <el-dialog title="编辑用户" :visible.sync="dialogEditFormVisible">
       <el-form :model="editHorseForm" >
@@ -166,166 +202,216 @@
 
 <script>
     export default {
-        data(){
-          return{
-            dialogEditFormVisible:false,
-            delId:'',
+      data() {
+        return {
+          currentRoleId:-1,
+          dialogEditUserRoleFormVisible: false,
+          dialogEditFormVisible: false,
+          delId: '',
+          name: '',
+          totalCount: -1,
+          pageIndex: 1,
+          pageSize: 10,
+          userList: [],
+          errorMessage: '',
+          dialogVisible: false,
+          dialogFormVisible: false,
+          editUserRoleForm: {
+            id: '',
             name: '',
-            totalCount:-1,
-            pageIndex: 1,
-            pageSize:10,
-            userList:[],
-            errorMessage:'',
-            dialogVisible:false,
-            dialogFormVisible:false,
-            editHorseForm:{
-              id:'',
-              name:'',
-              email:'',
-              phone:''
-            },
-            addHorseForm:{
-              name:'',
-              email:'',
-              phone:''
-            }
-
-          }
-        },
-      created(){
-          this.getUserList()
-      },
-      methods:{
-
-        searchUser(){
-          this.pageIndex=1
-          this.getUserList();
-        },
-
-         changeStatus(row){
-           const that = this
-            const param = {"status":row.status}
-            this.$http.put("/usermanage/api/v1/horses/"+row.id, param).then(res=>{
-              const {status, errorMessage} = res.data
-              if (status !== 'SUCCEED'){
-                this.$message.error(errorMessage)
-              }
-            }).catch(function (err) {
-              that.$message.error(that.SERVE_RERROR)
-            })
-        },
-
-
-
-        cancelEdit(){
-          this.getUserList()
-          this.dialogEditFormVisible = false
+            email: '',
+            phone: '',
+            roleId: '',
+            roleName: ''
           },
+          roleList: [],
+          role: {
+            id: '',
+            name: '',
+            status: ''
+          },
+          editHorseForm: {
+            id: '',
+            name: '',
+            email: '',
+            phone: '',
+            roleId: ''
+          },
+          addHorseForm: {
+            name: '',
+            email: '',
+            phone: ''
+          }
 
-        async editHorse(){
+        }
+      },
+      created() {
+        this.getUserList()
+      },
+      methods: {
+
+        async editUserRole(){
           const that = this
-          const res =await this.$http.put("/usermanage/api/v1/horses/"+this.editHorseForm.id,this.editHorseForm)
-            .catch(function () {
-              that.$message.error(that.SERVE_RERROR)
-            })
-          const {status, errorMessage} = res.data
-          if (status === 'SUCCEED') {
+          const res =await this.$http.put("/usermanage/api/v1/horses/"+this.editHorseForm.id, this.editHorseForm).catch(function () {
+            that.$message.error(that.SERVE_RERROR)
+          })
+          const{status, errorMessage} = res.data
+          if (status === 'SUCCEED'){
             this.$message.success('修改成功')
+            this.editHorseForm={}
+            this.dialogEditUserRoleFormVisible=false
             this.getUserList()
-            this.dialogEditFormVisible = false
+          } else {
+            that.$message.error(errorMessage);
           }
         },
 
-        diagEditShow(row){
-          /*this.editHorseForm={...row}*/
-          this.editHorseForm=Object.assign({}, row)
-          this.dialogEditFormVisible=true
+        selectRole(id){
+          this.editHorseForm.roleId = id
         },
 
-        dialogshow(id){
-          this.delId = id
-          this.dialogVisible=true
-        },
+        //打开分配角色对话框
+        async showSetUserRoleDia(user){
+          this.dialogEditUserRoleFormVisible=true
 
-        handleSizeChange(val){
-          this.pageSize=val
-          this.pageIndex = 1
-          console.log(`每页${val}条`)
-          this.getUserList()
-
-        },
-        handleCurrentChange(val) {
-          this.pageIndex=val
-          this.getUserList()
-          console.log(`当前页: ${val}`);
-        },
-
-        addUser(){
           const that = this
-        },
-
-        async delHorse(){
-          const that = this
-          const res = await this.$http.delete('/usermanage/api/v1/horses/'+this.delId)
-            .catch(function () {
-              that.$message.error(that.SERVE_RERROR)
-            })
-          const {status, errorMessage} = res.data
+          const res = await this.$http.get("/usermanage/api/v1/roles?pageIndex=1&pageSize=1000").catch(function () {
+            that.$message.error(that.SERVE_RERROR)
+          })
+          const {status, totalCount, datas, errorMessage} = res.data
           if (status === 'SUCCEED'){
-            this.$message.success('删除成功')
-            this.dialogVisible=false
-            //判断当前页是否还有数据，如果当前页没数据，且非首页，则请求第一页的数据
-            if (this.userList.length ===1 && this.pageIndex !== 1){
-              this.pageIndex = 1
-              this.getUserList()
-            }else {
-              this.getUserList()
-            }
-
-          } else {
+            this.roleList = datas
+            this.editHorseForm={...user}
+            this.currentRoleId = this.editHorseForm.roleId
+          }else {
             this.$message.error(errorMessage)
           }
+
+
         },
 
-        async addHorse(){
-          const that = this
-          const res = await this.$http.post('/usermanage/api/v1/horses', this.addHorseForm)
-            .catch(function () {
-              that.$message.error(that.SERVE_RERROR)
-          })
+      searchUser() {
+        this.pageIndex = 1
+        this.getUserList();
+      },
+
+      changeStatus(row) {
+        const that = this
+        const param = {"status": row.status}
+        this.$http.put("/usermanage/api/v1/horses/" + row.id, param).then(res => {
           const {status, errorMessage} = res.data
-          if (status === 'SUCCEED'){
-            this.$message.success('添加成功')
-            this.getUserList()
-            this.addHorseForm={}
-            this.dialogFormVisible=false
-
-          } else {
-            this.$message.error(this.errorMessage)
+          if (status !== 'SUCCEED') {
+            this.$message.error(errorMessage)
           }
-        },
+        }).catch(function (err) {
+          that.$message.error(that.SERVE_RERROR)
+        })
+      },
 
-         async getUserList(){
-           const that = this
-           //this.$http.defaults.headers.common['token'] = localStorage.getItem("token")
-           const res = await this.$http.get('/usermanage/api/v1/horses?pageIndex='
-             +this.pageIndex+'&pageSize='+this.pageSize+'&name='+this.name).catch(function () {
-             that.$message.error(that.SERVE_RERROR)
-           })
-           const {status, totalCount, datas, errorMessage} = res.data
-           if (status === 'SUCCEED'){
-             //1.给表格数据赋值
-             this.userList = datas
-             this.totalCount = totalCount
-             //2.给total赋值
-           }else {
-             this.$message.error(this.errorMessage)
-           }
-          },
 
-        //rechangeWater
+      cancelEdit() {
+        this.getUserList()
+        this.dialogEditFormVisible = false
+      },
 
-      }
+      async editHorse() {
+        const that = this
+        const res = await this.$http.put("/usermanage/api/v1/horses/" + this.editHorseForm.id, this.editHorseForm)
+          .catch(function () {
+            that.$message.error(that.SERVE_RERROR)
+          })
+        const {status, errorMessage} = res.data
+        if (status === 'SUCCEED') {
+          this.$message.success('修改成功')
+          this.getUserList()
+          this.dialogEditFormVisible = false
+        }
+      },
+
+      diagEditShow(row) {
+        /*this.editHorseForm={...row}*/
+        this.editHorseForm = Object.assign({}, row)
+        this.dialogEditFormVisible = true
+      },
+
+      dialogshow(id) {
+        this.delId = id
+        this.dialogVisible = true
+      },
+
+      handleSizeChange(val) {
+        this.pageSize = val
+        this.pageIndex = 1
+        console.log(`每页${val}条`)
+        this.getUserList()
+
+      },
+      handleCurrentChange(val) {
+        this.pageIndex = val
+        this.getUserList()
+        console.log(`当前页: ${val}`);
+      },
+
+      async delHorse() {
+        const that = this
+        const res = await this.$http.delete('/usermanage/api/v1/horses/' + this.delId)
+          .catch(function () {
+            that.$message.error(that.SERVE_RERROR)
+          })
+        const {status, errorMessage} = res.data
+        if (status === 'SUCCEED') {
+          this.$message.success('删除成功')
+          this.dialogVisible = false
+          //判断当前页是否还有数据，如果当前页没数据，且非首页，则请求第一页的数据
+          if (this.userList.length === 1 && this.pageIndex !== 1) {
+            this.pageIndex = 1
+            this.getUserList()
+          } else {
+            this.getUserList()
+          }
+
+        } else {
+          this.$message.error(errorMessage)
+        }
+      },
+
+      async addHorse() {
+        const that = this
+        const res = await this.$http.post('/usermanage/api/v1/horses', this.addHorseForm)
+          .catch(function () {
+            that.$message.error(that.SERVE_RERROR)
+          })
+        const {status, errorMessage} = res.data
+        if (status === 'SUCCEED') {
+          this.$message.success('添加成功')
+          this.getUserList()
+          this.addHorseForm = {}
+          this.dialogFormVisible = false
+
+        } else {
+          this.$message.error(this.errorMessage)
+        }
+      },
+
+      async getUserList() {
+        const that = this
+        //this.$http.defaults.headers.common['token'] = localStorage.getItem("token")
+        const res = await this.$http.get('/usermanage/api/v1/horses?pageIndex='
+          + this.pageIndex + '&pageSize=' + this.pageSize + '&name=' + this.name).catch(function () {
+          that.$message.error(that.SERVE_RERROR)
+        })
+        const {status, totalCount, datas, errorMessage} = res.data
+        if (status === 'SUCCEED') {
+          //1.给表格数据赋值
+          this.userList = datas
+          this.totalCount = totalCount
+          //2.给total赋值
+        } else {
+          this.$message.error(this.errorMessage)
+        }
+      },
+    }
+
     }
 </script>
 
